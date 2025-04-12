@@ -1,0 +1,39 @@
+{
+  "name": "microblog-platform",
+  "version": "1.0.0",
+  "description": "Microblog platform with microservices architecture",
+  "scripts": {
+    "install:all": "npm run install:auth && npm run install:users && npm run install:posts && npm run install:comments && npm run install:notifications && npm run install:gateway && npm run install:search && npm run install:analytics",
+    "install:auth": "cd services/auth && npm install",
+    "install:users": "cd services/users && npm install",
+    "install:posts": "cd services/posts && npm install",
+    "install:comments": "cd services/comments && npm install",
+    "install:notifications": "cd services/notifications && npm install",
+    "install:gateway": "cd services/gateway && npm install",
+    "install:search": "cd services/search && npm install",
+    "install:analytics": "cd services/analytics && npm install",
+    
+    "start:dev": "concurrently \"npm run start:dev:auth\" \"npm run start:dev:users\" \"npm run start:dev:posts\" \"npm run start:dev:comments\" \"npm run start:dev:notifications\" \"npm run start:dev:gateway\" \"npm run start:dev:search\" \"npm run start:dev:analytics\"",
+    "start:dev:auth": "cd services/auth && npm run start:dev",
+    "start:dev:users": "cd services/users && npm run start:dev",
+    "start:dev:posts": "cd services/posts && npm run start:dev",
+    "start:dev:comments": "cd services/comments && npm run start:dev",
+    "start:dev:notifications": "cd services/notifications && npm run start:dev",
+    "start:dev:gateway": "cd services/gateway && npm run start:dev",
+    "start:dev:search": "cd services/search && npm run start:dev",
+    "start:dev:analytics": "cd services/analytics && npm run start:dev",
+    
+    "build:all": "npm run build:auth && npm run build:users && npm run build:posts && npm run build:comments && npm run build:notifications && npm run build:gateway && npm run build:search && npm run build:analytics",
+    "build:auth": "cd services/auth && npm run build",
+    "build:users": "cd services/users && npm run build",
+    "build:posts": "cd services/posts && npm run build",
+    "build:comments": "cd services/comments && npm run build",
+    "build:notifications": "cd services/notifications && npm run build",
+    "build:gateway": "cd services/gateway && npm run build",
+    "build:search": "cd services/search && npm run build",
+    "build:analytics": "cd services/analytics && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
