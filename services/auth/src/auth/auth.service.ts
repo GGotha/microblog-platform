@@ -1,20 +1,16 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JsonWebTokenError, JwtService } from '@nestjs/jwt';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import * as bcrypt from 'bcryptjs';
-import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepository: Repository<User>,
     private jwtService: JwtService,
   ) {}
 
@@ -27,14 +23,11 @@ export class AuthService {
     return null;
   }
 
-  async login(user: any) {
-    const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  async login(credentials: { email: string; password: string }) {
+    return { message: 'Login successful' };
   }
 
-  async register(userData: Partial<User>): Promise<User> {
+  async register(userData: Partial<User>) {
     const isEmailAvailable = await this.isEmailAvailable(userData.email);
     if (!isEmailAvailable) {
       throw new RpcException({
@@ -44,11 +37,7 @@ export class AuthService {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const user = this.userRepository.create({
-      ...userData,
-      password: hashedPassword,
-    });
+    const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
   }
 
@@ -71,8 +60,15 @@ export class AuthService {
     }
   }
 
-  async isEmailAvailable(email: string): Promise<boolean> {
-    const user = await this.userRepository.findOne({ where: { email } });
-    return !user;
+  private async isEmailAvailable(email: string): Promise<boolean> {
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
+    return !existingUser;
+  }
+
+  async health() {
+    const userCount = await this.userRepository.count();
+    return { status: 'ok', users: userCount };
   }
 }

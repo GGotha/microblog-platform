@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { User } from './entities/user.entity';
+import { RpcExceptionFilter } from './filters/rpc-exception.filter';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { APP_FILTER } from '@nestjs/core';
-import { RpcExceptionFilter } from './filters/rpc-exception.filter';
 
 @Module({
   imports: [

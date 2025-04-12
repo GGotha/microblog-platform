@@ -14,6 +14,12 @@ async function bootstrap() {
     }),
   );
 
+  // Habilitar endpoints globais, incluindo /metrics
+  app.enableShutdownHooks();
+
+  // Configurar CORS
+  app.enableCors();
+
   await app.listen(3000);
 }
 bootstrap();

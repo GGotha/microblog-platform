@@ -1,17 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { AuthController } from './auth/auth.controller';
-import { HealthController } from './health/health.controller';
+import { AuthController } from './auth.controller';
+import { AUTH_SERVICE } from './auth.constants';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
     ClientsModule.register([
       {
-        name: 'AUTH_SERVICE',
+        name: AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
           host: process.env.AUTH_SERVICE_HOST || 'auth-service',
@@ -20,6 +16,7 @@ import { HealthController } from './health/health.controller';
       },
     ]),
   ],
-  controllers: [AuthController, HealthController],
+  controllers: [AuthController],
+  exports: [ClientsModule],
 })
-export class AppModule {}
+export class AuthModule {}
