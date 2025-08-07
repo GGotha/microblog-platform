@@ -24,7 +24,14 @@ export class AuthService {
   }
 
   async login(credentials: { email: string; password: string }) {
-    return { message: 'Login successful' };
+    const user = await this.validateUser(
+      credentials.email,
+      credentials.password,
+    );
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    return user;
   }
 
   async register(userData: Partial<User>) {

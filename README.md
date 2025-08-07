@@ -2,6 +2,14 @@
 
 Um projeto de estudo focado em arquitetura de microserviços e DevOps, demonstrando como construir uma plataforma social escalável para milhões de usuários.
 
+## Metas
+
+- Arquitetura de Microsserviços
+- Grafana
+- Prometeus
+- Usar traefik
+- Usar kubernetes
+
 ![Arquitetura do Projeto](architecture.png)
 
 ## 📋 Sobre o Projeto

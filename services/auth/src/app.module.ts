@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
+import { MetricsController } from './metrics/metrics.controller';
 
 @Module({
   imports: [
@@ -24,5 +25,6 @@ import { HealthModule } from './health/health.module';
     AuthModule,
     HealthModule,
   ],
+  controllers: [MetricsController],
 })
 export class AppModule {}
