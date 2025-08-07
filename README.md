@@ -2,14 +2,6 @@
 
 Um projeto de estudo focado em arquitetura de microserviços e DevOps, demonstrando como construir uma plataforma social escalável para milhões de usuários.
 
-## Metas
-
-- Arquitetura de Microsserviços
-- Grafana
-- Prometeus
-- Usar traefik
-- Usar kubernetes
-
 ![Arquitetura do Projeto](architecture.png)
 
 ## 📋 Sobre o Projeto
@@ -90,12 +82,26 @@ Este é um projeto em desenvolvimento ativo, focado em aprendizado e implementa�
 
 ## 🛠️ Em Desenvolvimento
 
-- [ ] Implementação completa dos microserviços
-- [ ] Setup do Kubernetes
-- [ ] Configuração do monitoramento
-- [ ] Implementação de CI/CD
-- [ ] Documentação detalhada
-- [ ] Testes automatizados
+### 🎯 Próximos Passos (Prioridade Alta)
+
+- [ ] **Completar Microserviços**: Users, Posts, Comments, Search, Analytics, Notifications
+- [ ] **Configurar Traefik**: Ingress controller e load balancing
+- [ ] **Setup Kubernetes**: Cluster local e deployments
+- [ ] **Implementar CI/CD**: GitHub Actions e deployment automático
+
+### 📊 Status Atual
+
+- ✅ **Auth Service**: Funcionando
+- ✅ **Gateway Service**: Funcionando
+- ✅ **Docker Compose**: Configurado (dev/prod)
+- ✅ **Prometheus & Grafana**: Monitoramento básico
+- 🚧 **Outros Microserviços**: Em desenvolvimento
+- 🚧 **Traefik**: Pendente
+- 🚧 **Kubernetes**: Pendente
+
+### 📋 Roadmap Detalhado
+
+Veja o [ROADMAP.md](./ROADMAP.md) para um plano completo de desenvolvimento com cronograma e métricas de progresso.
 
 ## 📖 Documentação
 

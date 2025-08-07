@@ -44,6 +44,9 @@ export class AuthService {
       });
     }
 
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    userData.password = hashedPassword;
+
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
   }

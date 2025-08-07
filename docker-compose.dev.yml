@@ -1,0 +1,379 @@
+services:
+  # Database Services - Development
+  postgres-auth:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: auth
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U root -d auth']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-users:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: users
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres-users-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U root -d users']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-posts:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: posts
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres-posts-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U root -d posts']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb-comments:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb-comments-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongo', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb-notifications:
+    image: mongo:latest
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongodb-notifications-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongo', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    ports:
+      - '9200:9200'
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'curl -f http://localhost:9200/_cluster/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    ports:
+      - '8086:8086'
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=myorg
+      - DOCKER_INFLUXDB_INIT_BUCKET=mybucket
+    healthcheck:
+      test: ['CMD', 'influx', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Microservices - Development with Hot Reload
+  auth-service:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3001:3001' # TCP microservice
+      - '3002:3002' # HTTP observability
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres-auth
+      - DB_PORT=5432
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=auth
+      - JWT_SECRET=dev-secret-key-change-in-production
+    volumes:
+      - ./services/auth:/app
+      - /app/node_modules
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # users-service:
+  #   build:
+  #     context: ./services/users
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - '3003:3003'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - DB_HOST=postgres-users
+  #     - DB_PORT=5432
+  #     - DB_USERNAME=root
+  #     - DB_PASSWORD=root
+  #     - DB_DATABASE=users
+  #   volumes:
+  #     - ./services/users:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     postgres-users:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # posts-service:
+  #   build:
+  #     context: ./services/posts
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - '3004:3004'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - DB_HOST=postgres-posts
+  #     - DB_PORT=5432
+  #     - DB_USERNAME=root
+  #     - DB_PASSWORD=root
+  #     - DB_DATABASE=posts
+  #   volumes:
+  #     - ./services/posts:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     postgres-posts:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # comments-service:
+  #   build:
+  #     context: ./services/comments
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - '3005:3005'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - MONGODB_URI=mongodb://mongodb-comments:27017/comments
+  #   volumes:
+  #     - ./services/comments:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     mongodb-comments:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # notifications-service:
+  #   build:
+  #     context: ./services/notifications
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - '3006:3006'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - MONGODB_URI=mongodb://mongodb-notifications:27017/notifications
+  #     - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+  #   volumes:
+  #     - ./services/notifications:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     mongodb-notifications:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # search-service:
+  #   build:
+  #     context: ./services/search
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - '3007:3007'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - ELASTICSEARCH_URL=http://elasticsearch:9200
+  #   volumes:
+  #     - ./services/search:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # analytics-service:
+  #   build:
+  #     context: ./services/analytics
+  #     dockerfile: Dockerfile.dev
+  #   ports:
+  #     - '3008:3008'
+  #   environment:
+  #     - NODE_ENV=development
+  #     - INFLUXDB_URL=http://influxdb:8086
+  #     - INFLUXDB_TOKEN=your-token-here
+  #     - INFLUXDB_ORG=myorg
+  #     - INFLUXDB_BUCKET=mybucket
+  #   volumes:
+  #     - ./services/analytics:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     influxdb:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  gateway-service:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
+      - USERS_SERVICE_HOST=users-service
+      - USERS_SERVICE_PORT=3003
+      - POSTS_SERVICE_HOST=posts-service
+      - POSTS_SERVICE_PORT=3004
+      - COMMENTS_SERVICE_HOST=comments-service
+      - COMMENTS_SERVICE_PORT=3005
+      - NOTIFICATIONS_SERVICE_HOST=notifications-service
+      - NOTIFICATIONS_SERVICE_PORT=3006
+      - SEARCH_SERVICE_HOST=search-service
+      - SEARCH_SERVICE_PORT=3007
+      - ANALYTICS_SERVICE_HOST=analytics-service
+      - ANALYTICS_SERVICE_PORT=3008
+    volumes:
+      - ./services/gateway:/app
+      - /app/node_modules
+    depends_on:
+      - auth-service
+      # - users-service
+      # - posts-service
+      # - comments-service
+      # - notifications-service
+      # - search-service
+      # - analytics-service
+    restart: unless-stopped
+
+  # Monitoring Services - Development
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-dev
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./monitoring/prometheus/prometheus.dev.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-dev
+    ports:
+      - '3010:3000'
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter-dev
+    ports:
+      - '9100:9100'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+
+  # Development Tools
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  # mailhog:
+  #   image: mailhog/mailhog:latest
+  #   ports:
+  #     - '1025:1025' # SMTP
+  #     - '8025:8025' # Web UI
+  #   restart: unless-stopped
+
+volumes:
+  postgres-auth-data:
+  postgres-users-data:
+  postgres-posts-data:
+  mongodb-comments-data:
+  mongodb-notifications-data:
+  elasticsearch-data:
+  influxdb-data:
+  rabbitmq-data:
+  grafana-data:
+  prometheus-data:
+  redis-data:
